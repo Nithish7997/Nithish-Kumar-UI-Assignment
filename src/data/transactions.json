@@ -1,0 +1,44 @@
+[
+  {
+    "transactionId": "txn001",
+    "customerId": "cust001",
+    "name": "Alice",
+    "date": "2024-01-15",
+    "amount": 120
+  },
+  {
+    "transactionId": "txn001",
+    "customerId": "cust001",
+    "name": "Alice",
+    "date": "2025-01-15",
+    "amount": 120
+  },
+  {
+    "transactionId": "txn002",
+    "customerId": "cust001",
+    "name": "Alice",
+    "date": "2025-02-15",
+    "amount": 80
+  },
+  {
+    "transactionId": "txn003",
+    "customerId": "cust002",
+    "name": "Bob",
+    "date": "2025-01-10",
+    "amount": 200
+  },
+  {
+    "transactionId": "txn004",
+    "customerId": "cust002",
+    "name": "Bob",
+    "date": "2025-03-05",
+    "amount": 95
+  },
+  {
+    "transactionId": "txn005",
+    "customerId": "cust003",
+    "name": "Charlie",
+    "date": "2025-02-20",
+    "amount": 130
+  }
+]
