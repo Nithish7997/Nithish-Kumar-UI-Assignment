@@ -169,8 +169,8 @@ export const transactions = [
   },
   {
     transactionId: "T025",
-    customerId: "C011",
-    customerName: "Karen",
+    customerId: "C010",
+    customerName: "Jack",
     amount: 175.6,
     date: "2024-05-08",
   },

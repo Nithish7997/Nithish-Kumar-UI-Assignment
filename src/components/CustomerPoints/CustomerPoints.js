@@ -7,7 +7,7 @@ import { debounce } from "../../utils/debounce";
  * Displays customer reward points in a table format.
  */
 const CustomerPoints = () => {
-  const [data, setData] = useState([]);
+  // const [data, setData] = useState([]);
   const [summary, setSummary] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -33,7 +33,7 @@ const CustomerPoints = () => {
       const response = await new Promise((resolve) => {
         setTimeout(() => resolve(transactions), 1000);
       });
-      setData(response);
+      // setData(response);
       setSummary(calculateSummary(response));
     } catch (err) {
       console.error("Error fetching transactions:", err);
@@ -61,7 +61,6 @@ const CustomerPoints = () => {
 
   return (
     <div>
-      <h2>Customer Reward Points</h2>
       <input
         type="text"
         placeholder="Search by Customer Name or ID"
