@@ -1,131 +1,111 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { fetchTransactions } from "../../api/transactionService";
-import { calculatePoints } from "../../utils/rewardCalculator";
-import useDebounce from "../../hooks/useDebounce";
-import Loader from "../Loader/Loader";
+import { transactions } from "../../data/transactions";
+import { calculateSummary } from "../../utils/calculateSummary";
+import { debounce } from "../../utils/debounce";
 
 /**
- * CustomerPoints Component
- * Displays reward points per customer grouped by month and total,
- * with support for search by customer name or ID, and detailed transaction info.
+ * Displays customer reward points in a table format.
  */
-function CustomerPoints() {
+const CustomerPoints = () => {
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search.toLowerCase(), 300);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  const debouncedChange = useMemo(
+    () =>
+      debounce((value) => {
+        setDebouncedSearch(value.toLowerCase());
+      }, 500),
+    []
+  );
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const response = await fetchTransactions();
-        setData(response);
-      } catch (err) {
-        console.error("Error fetching transactions:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
+    fetchTransactions();
   }, []);
 
-  /**
-   * Process transactions and calculate points grouped by customer and month.
-   */
-  const rewardsByCustomer = useMemo(() => {
-    const summary = {};
-    data.forEach(({ transactionId, customerId, name, date, amount }) => {
-      const month = new Date(date).toLocaleString("default", {
-        month: "short",
-        year: "numeric",
+  const fetchTransactions = async () => {
+    setLoading(true);
+    try {
+      // Simulate async API call
+      const response = await new Promise((resolve) => {
+        setTimeout(() => resolve(transactions), 1000);
       });
-      const points = calculatePoints(amount);
-
-      if (!summary[customerId]) {
-        summary[customerId] = {
-          name,
-          customerId,
-          monthly: {},
-          total: 0,
-        };
-      }
-
-      if (!summary[customerId].monthly[month]) {
-        summary[customerId].monthly[month] = {
-          points: 0,
-          transactions: [],
-        };
-      }
-
-      summary[customerId].monthly[month].points += points;
-      summary[customerId].total += points;
-
-      summary[customerId].monthly[month].transactions.push({
-        transactionId,
-        amount,
-        date,
-        points,
-      });
-    });
-    // In debounce convert the entries pair of array back to object using fromEntries
-    if (debouncedSearch) {
-      return Object.fromEntries(
-        Object.entries(summary).filter(
-          ([id, customer]) =>
-            customer.name.toLowerCase().includes(debouncedSearch) ||
-            id.toLowerCase().includes(debouncedSearch)
-        )
-      );
+      setData(response);
+      setSummary(calculateSummary(response));
+    } catch (err) {
+      console.error("Error fetching transactions:", err);
+      setError("Failed to fetch transactions. Please try again later.");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    return summary;
-  }, [data, debouncedSearch]);
+  const filteredSummary = useMemo(() => {
+    if (!debouncedSearch) return summary;
 
-  if (loading) return <Loader />;
+    return Object.fromEntries(
+      Object.entries(summary).filter(([id, customer]) => {
+        const matchNameOrId =
+          customer.name.toLowerCase().includes(debouncedSearch) ||
+          id.toLowerCase().includes(debouncedSearch);
+        return matchNameOrId;
+      })
+    );
+  }, [debouncedSearch, summary]);
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p style={{ color: "red" }}>{error}</p>;
 
   return (
-    <>
+    <div>
+      <h2>Customer Reward Points</h2>
       <input
         type="text"
-        placeholder="Search by name or customer ID"
+        placeholder="Search by Customer Name or ID"
+        onChange={(e) => {
+          setSearch(e.target.value);
+          debouncedChange(e.target.value);
+        }}
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{ marginBottom: "20px", padding: "5px", width: "280px" }}
       />
 
-      {Object.entries(rewardsByCustomer).map(([id, customer]) => (
-        <div key={id} style={{ marginBottom: "25px" }}>
-          <h3>
-            {customer.name} ({customer.customerId})
-          </h3>
-          <ul>
-            {Object.entries(customer.monthly).map(([month, monthData]) => (
-              <li key={month}>
-                <strong>
-                  {month}: {monthData.points} points
-                </strong>
-                <ul>
-                  {monthData.transactions.map((txn) => (
-                    <li key={txn.transactionId}>
-                      ID: {txn.transactionId} | Date:{" "}
-                      {new Date(txn.date).toLocaleString("default", {
-                        month: "long",
-                        year: "numeric",
-                      })}{" "}
-                      | Amount: ${txn.amount} | Points: {txn.points}
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            ))}
-            <li>
-              <strong>Total: {customer.total} points</strong>
-            </li>
-          </ul>
-        </div>
-      ))}
-    </>
+      {Object.keys(filteredSummary).length === 0 ? (
+        <p>No matching records found.</p>
+      ) : (
+        Object.entries(filteredSummary).map(([id, customer]) => (
+          <div key={id}>
+            <h3>
+              {customer.name} ({id})
+            </h3>
+            <table border="1" cellPadding="5" style={{ marginBottom: "20px" }}>
+              <thead>
+                <tr>
+                  <th>Month-Year</th>
+                  <th>Points Earned</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(customer.monthlyPoints).map(
+                  ([month, points]) => (
+                    <tr key={month}>
+                      <td>{month}</td>
+                      <td>{points}</td>
+                    </tr>
+                  )
+                )}
+              </tbody>
+            </table>
+            <p>
+              <strong>Total Points:</strong> {customer.totalPoints}
+            </p>
+          </div>
+        ))
+      )}
+    </div>
   );
-}
+};
 
 export default CustomerPoints;
